@@ -9,18 +9,19 @@ def scrape_all():
     # Initiate headless driver
     browser = Browser("chrome", executable_path="chromedriver", headless=True)
     # Set executable path and initialize the chrome browser in splinter 
-    executable_path = {'executable_path': '/usr/local/bin/chromedriver'}
-    browser = Browser('chrome', **executable_path)
+    #executable_path = {'executable_path': '/usr/local/bin/chromedriver'}
+    #browser = Browser('chrome', **executable_path)
 
     # Since these are pairs 
     news_title, news_paragraph= mars_news(browser)
-
+    hemisphere_image_urls=hemisphere(browser)
     # Run all scraping functions and store results in dictionary 
     data={
         "news_title": news_title,
         "news_paragraph": news_paragraph,
         "featured_image": featured_image(browser),
         "facts": mars_facts(),
+        "hemispheres": hemisphere_image_urls,
         "last_modified": dt.datetime.now()
     }
 
@@ -57,7 +58,7 @@ def mars_news(browser):
 
         # Chained the (.find) to slide_elem which says this variable holds lots of info, so look inside to find this specific entity
         # Get Title
-        news_title=slide_elem.find('div', class_= 'content_title').get_text
+        news_title=slide_elem.find('div', class_= 'content_title').get_text()
         # Get article body
         news_p= slide_elem.find('div', class_='article_teaser_body').get_text()
 
@@ -77,7 +78,7 @@ def featured_image(browser):
     browser.visit(url)
 
     # Find and click the full_image button
-    full_image_elem= browser.find_by_id('full_image')
+    full_image_elem= browser.find_by_id('full_image')[0]
     full_image_elem.click()
 
     # Find the more info button and click that 
@@ -130,6 +131,39 @@ def mars_facts():
 
     #Convert back to HTML format, add bootstrap
     return df.to_html()
+
+#-------------------------------------------------------#
+
+# Scrape Hemisphere
+
+def hemisphere(browser):
+    url='https://astrogeology.usgs.gov/search/results?q=hemisphere+enhanced&k1=target&v1=Mars'
+    browser.visit(url)
+
+
+    hemisphere_image_urls = []
+
+    imgs_links= browser.find_by_css("a.product-item h3")
+
+    for x in range(len(imgs_links)):
+        hemisphere={}
+
+        # Find elements going to click link 
+        browser.find_by_css("a.product-item h3")[x].click()
+
+        # Find sample Image link
+        sample_img= browser.find_link_by_text("Sample").first
+        hemisphere['img_url']=sample_img['href']
+
+        # Get hemisphere Title
+        hemisphere['title']=browser.find_by_css("h2.title").text
+
+        #Add Objects to hemisphere_img_urls list
+        hemisphere_image_urls.append(hemisphere)
+
+        # Go Back
+        browser.back()
+    return hemisphere_image_urls
 
 if __name__== "__main__":
     # If running as script, print scrapped data

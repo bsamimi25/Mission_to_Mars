@@ -2,8 +2,6 @@ from flask import Flask, render_template
 from flask_pymongo import PyMongo
 import scraping
 
-
-
 app= Flask(__name__)
 
 # Use flask_pymongo to set up mongo connection
@@ -22,7 +20,7 @@ def scrape():
     #holds newly scraped data, referencing scrape_all() function in scraping.py file
     mars_data=scraping.scrape_all()
     mars.update({},mars_data,upsert=True)
-    return "Scraping Successful!"
+    return "Scraping Successful"
 
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True)
